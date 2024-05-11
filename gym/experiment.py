@@ -98,7 +98,7 @@ def main(variant):
     model_type = variant['model_type']
     seed = variant['seed']
     device = 'cuda' if torch.cuda.is_available() else 'cpu'  #variant.get('device', 'cuda')
-
+    
     log_to_wandb = variant.get('log_to_wandb', False)
     if log_to_wandb:
         if has_wandb:

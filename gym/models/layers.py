@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from einops import rearrange, repeat, einsum
 from mamba_ssm import Mamba
 
+from .LRU import LRU
+
 
 # just for compatibility with other files, we do not use this Convolution module
 class Convolution(nn.Module):
@@ -162,6 +164,11 @@ class MambaBlock(nn.Module):
         self.D = nn.Parameter(torch.ones(args.d_inner))
         self.D._no_weight_decay = True
         self.out_proj = nn.Linear(args.d_inner, args.d_model, bias=args.bias)
+        
+        self.lru = LRU(
+            in_features=256,
+            state_features=128,
+            out_features=256)
 
 
     def forward(self, x):
@@ -187,8 +194,8 @@ class MambaBlock(nn.Module):
         x = self.conv1d(x)[:, :, :l]
         x = rearrange(x, 'b d_in l -> b l d_in')
         x = F.silu(x)
-
-        y = self.ssm(x)
+        # y = self.ssm(x)
+        y = self.lru(x)
         y = y * F.silu(res)
 
         output = self.out_proj(y)
